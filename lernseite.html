@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>M300 LB2 – Cheat Sheet</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #fff; color: #111; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .meta { color: #555; font-size: 13px; margin-bottom: 28px; }
+
+    /* GRID LAYOUT */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+    .box { border: 1px solid #ccc; border-radius: 4px; padding: 14px 16px; break-inside: avoid; }
+    .box.wide { grid-column: span 2; }
+    .box.full { grid-column: span 3; }
+
+    .box h2 { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #111; color: #111; }
+
+    pre { background: #f4f4f4; border-radius: 3px; padding: 8px 10px; font-size: 12px; font-family: 'Consolas', 'Courier New', monospace; line-height: 1.6; overflow-x: auto; margin: 6px 0; white-space: pre; }
+    code { font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
+
+    .note { background: #fffbe6; border-left: 3px solid #f0c000; padding: 6px 10px; margin: 6px 0; font-size: 12px; border-radius: 0 3px 3px 0; }
+    .warn { background: #fff0f0; border-left: 3px solid #d00; padding: 6px 10px; margin: 6px 0; font-size: 12px; border-radius: 0 3px 3px 0; }
+
+    p { margin: 4px 0 8px; font-size: 13px; color: #333; }
+    ul { padding-left: 16px; margin: 4px 0 8px; }
+    li { font-size: 13px; margin-bottom: 2px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+    th { background: #f0f0f0; font-weight: 700; padding: 5px 8px; text-align: left; border: 1px solid #ccc; }
+    td { padding: 5px 8px; border: 1px solid #ddd; vertical-align: top; }
+
+    .c { color: #888; }       /* comment */
+    .sec { border-top: 2px solid #111; margin-top: 24px; padding-top: 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>M300 LB2 – Cheat Sheet</h1>
+  <div class="meta">SSH · Disk · DNS · Apache · SSH-Tunnel · Docker · Traefik &nbsp;|&nbsp; Open Book, Internet + KI erlaubt</div>
+
+  <div class="grid">
+
+    <!-- SSH VERBINDUNG -->
+    <div class="box">
+      <h2>SSH – Verbindung</h2>
+      <pre>ssh user@host
+ssh -p 2222 user@host
+ssh -i ~/.ssh/key user@host
+ssh -v user@host          <span class="c"># debug</span>
+ssh -vvv user@host        <span class="c"># max debug</span>
+ssh user@host ls /var/www <span class="c"># einmalig</span>
+
+<span class="c"># Datei kopieren</span>
+scp file user@host:/pfad/
+scp user@host:/pfad/file .
+scp -r ordner/ user@host:/pfad/
+
+sftp user@host
+<span class="c"># ls / cd / get / put / exit</span>
+
+rsync -rav --progress --delete \
+  local/ user@host:remote/</pre>
+    </div>
+
+    <!-- SSH KEYS -->
+    <div class="box">
+      <h2>SSH – Keys &amp; Config</h2>
+      <pre><span class="c"># Key erstellen</span>
+ssh-keygen -t ecdsa
+ssh-keygen -t ed25519
+
+<span class="c"># Public Key auf Server kopieren</span>
+ssh-copy-id user@host
+
+<span class="c"># Key auch für root</span>
+sudo -i
+tail -n1 ~vmadmin/.ssh/authorized_keys \
+  >> .ssh/authorized_keys</pre>
+      <p style="font-size:11px; margin-top:4px;"><strong>~/.ssh/config</strong></p>
+      <pre>Host vmls3
+  HostName 192.168.220.13
+  User vmadmin
+  IdentityFile ~/.ssh/id_ecdsa
+  Port 22
+  IdentitiesOnly yes</pre>
+      <p style="font-size:11px;"><strong>Wichtige Pfade:</strong></p>
+      <pre>~/.ssh/config            <span class="c"># Shortcuts</span>
+~/.ssh/authorized_keys   <span class="c"># erlaubte Keys</span>
+/etc/ssh/sshd_config     <span class="c"># SSH-Server</span></pre>
+    </div>
+
+    <!-- DISK -->
+    <div class="box">
+      <h2>Disk &amp; Filesysteme</h2>
+      <pre>lsblk                    <span class="c"># Disks anzeigen</span>
+fdisk /dev/sdd           <span class="c"># n→p→1→Enter→w</span>
+lsblk                    <span class="c"># sdd1 sichtbar?</span>
+mkfs -t ext4 -L m300data /dev/sdd1
+blkid                    <span class="c"># Label/UUID prüfen</span>
+mkdir /m300data</pre>
+      <p style="font-size:11px;"><strong>/etc/fstab</strong> (am Ende anfügen):</p>
+      <pre>LABEL=m300data /m300data ext4 defaults 0 0</pre>
+      <pre>mount -a                 <span class="c"># testen!</span>
+df -h                    <span class="c"># Nutzung prüfen</span>
+reboot</pre>
+      <div class="warn">Immer <code>mount -a</code> testen bevor Neustart – Fehler in fstab = Server bootet nicht!</div>
+      <p style="font-size:11px; margin-top:6px;"><strong>Docker auf eigene Disk (vor Installation!):</strong></p>
+      <pre>mkdir /m300data/docker
+ln -s /m300data/docker /var/lib/docker</pre>
+    </div>
+
+    <!-- NETZWERK -->
+    <div class="box">
+      <h2>Netzwerk</h2>
+      <pre>ip addr                  <span class="c"># Interfaces/IPs</span>
+ip route                 <span class="c"># Routing</span>
+ping 8.8.8.8             <span class="c"># Internet?</span>
+ss -tlpn                 <span class="c"># offene TCP-Ports</span>
+resolvectl status        <span class="c"># DNS-Status</span></pre>
+      <p style="font-size:11px;"><strong>/etc/netplan/00-installer-config.yaml</strong></p>
+      <pre>network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses: [192.168.220.10/24]
+      routes:
+        - to: default
+          via: 192.168.220.1
+      nameservers:
+        addresses: [192.168.220.13]
+        search:
+          - lan.m300.smartlearn.ch</pre>
+      <pre>netplan apply</pre>
+      <p style="font-size:11px;"><strong>/etc/resolv.conf</strong></p>
+      <pre>nameserver 192.168.220.13
+search lan.m300.smartlearn.ch</pre>
+      <table>
+        <tr><th>Adresse</th><th>Bedeutung</th></tr>
+        <tr><td><code>0.0.0.0</code></td><td>alle Interfaces</td></tr>
+        <tr><td><code>127.0.0.1</code></td><td>nur localhost</td></tr>
+      </table>
+    </div>
+
+    <!-- SSH TUNNEL -->
+    <div class="box">
+      <h2>SSH Tunneling</h2>
+      <table>
+        <tr><th>Flag</th><th>Eingang</th><th>Richtung</th></tr>
+        <tr><td><code>-L</code></td><td>mein Rechner</td><td>lokal → remote</td></tr>
+        <tr><td><code>-R</code></td><td>SSH-Server</td><td>remote → lokal</td></tr>
+      </table>
+      <pre><span class="c"># -L: MySQL auf vmLS3 lokal erreichbar</span>
+ssh -L 127.0.0.1:13306:127.0.0.1:3306 \
+    vmadmin@192.168.220.13
+
+mysql -h 127.0.0.1 -P 13306 -u root -p
+
+<span class="c"># -R: Port 80 auf vmLS3:8123 erreichbar</span>
+ssh -R 0.0.0.0:8123:127.0.0.1:80 \
+    vmadmin@192.168.220.13
+
+<span class="c"># SSH durch Firewall (LP1→LS3, dann LS3→LP1)</span>
+ssh -R 12222:127.0.0.1:22 vmadmin@192.168.220.13
+<span class="c"># von vmLS3:</span>
+ssh -p 12222 vmadmin@127.0.0.1
+
+<span class="c"># Hintergrund, kein Terminal</span>
+ssh -fN -L ... oder -R ...
+
+<span class="c"># Tunnel finden &amp; beenden</span>
+ps aux | grep ssh
+kill &lt;PID&gt;</pre>
+      <div class="note">GatewayPorts yes in /etc/ssh/sshd_config nötig damit 0.0.0.0 bei -R funktioniert.</div>
+    </div>
+
+    <!-- DNS RECORDS -->
+    <div class="box">
+      <h2>DNS – Record-Typen</h2>
+      <table>
+        <tr><th>Typ</th><th>Bedeutung</th><th>Beispiel</th></tr>
+        <tr><td><code>A</code></td><td>Name → IPv4</td><td><code>vmls3 IN A 192.168.220.13</code></td></tr>
+        <tr><td><code>CNAME</code></td><td>Alias</td><td><code>www IN CNAME vmls3</code></td></tr>
+        <tr><td><code>MX</code></td><td>Mailserver</td><td><code>@ IN MX 10 mail.ch.</code></td></tr>
+        <tr><td><code>NS</code></td><td>Nameserver</td><td><code>@ IN NS ns.m300.ch.</code></td></tr>
+        <tr><td><code>SOA</code></td><td>Zonen-Info</td><td>Pflicht, 1. Eintrag</td></tr>
+        <tr><td><code>TXT</code></td><td>Freitext</td><td><code>@ IN TXT "info"</code></td></tr>
+        <tr><td><code>PTR</code></td><td>IP → Name</td><td><code>13 IN PTR vmls3.ch.</code></td></tr>
+      </table>
+      <div class="warn">PTR-Einträge immer mit Punkt am Ende: <code>vmls3.m300.smartlearn.ch.</code></div>
+      <div class="note">Bei jeder Zonenänderung: Serial-Nummer erhöhen! Dann <code>systemctl restart named</code></div>
+    </div>
+
+    <!-- DNS BIND9 -->
+    <div class="box wide">
+      <h2>DNS – BIND9 Installation &amp; Konfiguration</h2>
+      <pre><span class="c"># 1. systemd-resolved deaktivieren (zuerst!)</span>
+systemctl stop systemd-resolved
+systemctl disable systemd-resolved
+rm /etc/resolv.conf
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+<span class="c"># 2. Installieren</span>
+apt install -y bind9</pre>
+      <p style="font-size:11px;"><strong>/etc/bind/named.conf.options</strong></p>
+      <pre>options {
+    directory "/var/cache/bind";
+    forwarders { 8.8.8.8; };
+    allow-recursion { 192.168.210.0/24; 192.168.220.0/24; };
+    dnssec-validation no;
+    listen-on-v6 { };
+    auth-nxdomain no;
+    empty-zones-enable no;
+};</pre>
+      <p style="font-size:11px;"><strong>/etc/bind/named.conf.local</strong></p>
+      <pre>zone "lan.m300.smartlearn.ch" { type master; file "/etc/bind/db.lan.m300.smartlearn.ch"; };
+zone "220.168.192.in-addr.arpa" { type master; file "/etc/bind/db.192.168.220"; };
+zone "210.168.192.in-addr.arpa" { type master; file "/etc/bind/db.192.168.210"; };</pre>
+      <p style="font-size:11px;"><strong>/etc/bind/db.lan.m300.smartlearn.ch</strong></p>
+      <pre>$TTL 3600
+lan.m300.smartlearn.ch. IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. (
+    2024020802 3600 600 1209600 3600 )
+lan.m300.smartlearn.ch. IN NS  ns.m300.smartlearn.ch.
+vmls3   IN A  192.168.220.13
+vmls4   IN A  192.168.210.64
+www     IN CNAME vmls3</pre>
+      <p style="font-size:11px;"><strong>/etc/bind/db.192.168.220</strong></p>
+      <pre>$TTL 86400
+@ IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. ( 2024020801 14400 1800 1209600 3600 )
+@  172800 IN NS ns.m300.smartlearn.ch.
+13  IN PTR vmls3.m300.smartlearn.ch.
+1   IN PTR vmlf1.m300.smartlearn.ch.</pre>
+      <pre><span class="c"># Prüfen &amp; starten</span>
+named-checkconf
+named-checkzone lan.m300.smartlearn.ch /etc/bind/db.lan.m300.smartlearn.ch
+systemctl restart named
+journalctl -u named -f
+
+<span class="c"># Testen</span>
+nslookup vmls3.lan.m300.smartlearn.ch 192.168.220.13
+nslookup 192.168.220.13 192.168.220.13
+dig @192.168.220.13 vmls3.lan.m300.smartlearn.ch
+rndc querylog   <span class="c"># alle Queries loggen</span></pre>
+    </div>
+
+    <!-- APACHE -->
+    <div class="box">
+      <h2>Apache2 – Webserver</h2>
+      <pre>apt install -y apache2
+
+mkdir -p /var/www/html/myweb
+chown -R www-data:www-data /var/www/html/myweb</pre>
+      <p style="font-size:11px;"><strong>/etc/apache2/sites-available/myweb.conf</strong></p>
+      <pre>&lt;VirtualHost *:80&gt;
+    ServerName   myweb.m300.smartlearn.ch
+    DocumentRoot /var/www/html/myweb
+    ErrorLog  ${APACHE_LOG_DIR}/myweb-error.log
+    CustomLog ${APACHE_LOG_DIR}/myweb-access.log combined
+&lt;/VirtualHost&gt;</pre>
+      <pre>a2ensite myweb.conf
+apache2ctl configtest      <span class="c"># Syntax prüfen!</span>
+systemctl reload apache2</pre>
+      <div class="note">Name-based Virtual Hosting: Apache schaut auf den HTTP Host-Header. Mehrere .conf-Files = mehrere Sites auf Port 80.</div>
+      <pre><span class="c"># VHost testen ohne DNS:</span>
+curl -H "Host: myweb.m300.smartlearn.ch" http://127.0.0.1
+apache2ctl -S              <span class="c"># alle VHosts anzeigen</span>
+tail -f /var/log/apache2/error.log</pre>
+      <p style="font-size:11px;"><strong>Schnell-Webserver (Test):</strong></p>
+      <pre>python3 -m http.server 8080
+docker run -d -p 1234:80 traefik/whoami</pre>
+    </div>
+
+    <!-- DOCKER -->
+    <div class="box">
+      <h2>Docker – CLI</h2>
+      <pre><span class="c">## Container</span>
+docker ps -a               <span class="c"># alle (auch gestoppt)</span>
+docker start/stop/restart name
+docker rm -f name
+docker logs -f name        <span class="c"># live</span>
+docker logs --tail 50 name
+docker exec -it name bash  <span class="c"># einloggen</span>
+docker inspect name        <span class="c"># alle Details</span>
+docker stats               <span class="c"># CPU/RAM</span>
+
+<span class="c">## Images</span>
+docker images
+docker pull nginx:latest
+docker rmi image:tag
+
+<span class="c">## Volumes</span>
+docker volume ls
+docker volume create vol
+docker volume inspect vol  <span class="c"># Pfad auf Host</span>
+docker volume rm vol
+
+<span class="c">## Netzwerke</span>
+docker network ls
+docker network create traefik-proxy
+docker network inspect name
+
+<span class="c">## Aufräumen</span>
+docker system prune</pre>
+    </div>
+
+    <!-- DOCKER INSTALL + COMPOSE -->
+    <div class="box">
+      <h2>Docker – Install &amp; Compose</h2>
+      <pre><span class="c"># Symlink VOR Installation!</span>
+mkdir /m300data/docker
+ln -s /m300data/docker /var/lib/docker
+
+apt install -y docker.io docker-compose-v2
+usermod -aG docker vmadmin
+docker run hello-world     <span class="c"># Test</span>
+docker network create traefik-proxy</pre>
+      <p style="font-size:11px;"><strong>docker-compose.yml – Grundstruktur:</strong></p>
+      <pre>services:
+  app:
+    image: nginx:latest
+    container_name: app
+    restart: unless-stopped
+    ports:
+      - "8080:80"       <span class="c"># host:container</span>
+    volumes:
+      - ./data:/var/www <span class="c"># bind mount</span>
+      - myvol:/data     <span class="c"># named volume</span>
+    networks:
+      - traefik-proxy
+      - default
+    environment:
+      - MY_VAR=wert
+volumes:
+  myvol:
+networks:
+  traefik-proxy:
+    external: true      <span class="c"># WICHTIG!</span></pre>
+      <pre>docker compose up -d
+docker compose down
+docker compose down -v    <span class="c"># + Volumes</span>
+docker compose logs -f
+docker compose ps
+docker compose restart</pre>
+      <p style="font-size:11px;"><strong>Portainer:</strong></p>
+      <pre>docker volume create portainer_data
+docker run -d -p 9000:9000 --name portainer \
+  --restart always \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v portainer_data:/data \
+  portainer/portainer-ce:lts
+<span class="c"># http://&lt;ip&gt;:9000  PW min 12 Zeichen</span></pre>
+    </div>
+
+    <!-- TRAEFIK SETUP -->
+    <div class="box wide">
+      <h2>Traefik – Setup</h2>
+      <pre><span class="c"># Verzeichnisse</span>
+mkdir -p /m300data/docker-containers/traefik
+cd /m300data/docker-containers/traefik
+mkdir -p traefik/certs/default data
+<span class="c"># cert.pem + privkey.pem nach traefik/certs/default/</span>
+
+<span class="c"># Passwort-Hash für Dashboard</span>
+apt install -y apache2-utils
+htpasswd -nb admin meinPasswort    <span class="c"># Ausgabe kopieren</span></pre>
+      <p style="font-size:11px;"><strong>traefik/traefik.yml</strong></p>
+      <pre>entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+providers:
+  docker:
+    exposedByDefault: false
+    network: traefik-proxy
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+api:
+  insecure: false</pre>
+      <p style="font-size:11px;"><strong>traefik/dynamic.yml</strong> (TLS-Zertifikat)</p>
+      <pre>tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/default/cert.pem
+        keyFile:  /etc/traefik/certs/default/privkey.pem</pre>
+      <p style="font-size:11px;"><strong>docker-compose.yml</strong></p>
+      <pre>services:
+  traefik:
+    image: "traefik:v3.6"
+    container_name: traefik
+    restart: unless-stopped
+    networks: [traefik-proxy]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./data:/data"
+      - "./traefik:/etc/traefik"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.to-https.rule=hostregexp(`.+.m300.smartlearn.ch`)"
+      - "traefik.http.routers.to-https.entrypoints=web"
+      - "traefik.http.routers.to-https.middlewares=to-https"
+      - "traefik.http.middlewares.to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.m300.smartlearn.ch`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$..."
+networks:
+  traefik-proxy:
+    external: true</pre>
+      <pre>docker compose up -d
+<span class="c"># Dashboard: https://traefik.m300.smartlearn.ch/dashboard/</span></pre>
+    </div>
+
+    <!-- TRAEFIK LABELS -->
+    <div class="box">
+      <h2>Traefik – App anbinden</h2>
+      <p style="font-size:11px;"><strong>HTTP (Port 80):</strong></p>
+      <pre>labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.APP.rule=Host(`app.m300.smartlearn.ch`)"
+  - "traefik.http.routers.APP.entrypoints=web"
+  - "traefik.http.services.APP.loadbalancer.server.port=80"
+networks:
+  - traefik-proxy
+  - default</pre>
+      <p style="font-size:11px;"><strong>HTTPS (Port 443):</strong></p>
+      <pre>labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.APP.rule=Host(`app.m300.smartlearn.ch`)"
+  - "traefik.http.routers.APP.entrypoints=websecure"
+  - "traefik.http.routers.APP.tls=true"
+  - "traefik.http.services.APP.loadbalancer.server.port=80"</pre>
+      <div class="warn">ports: aus dem App-compose entfernen wenn Traefik läuft!</div>
+      <div class="note">App muss im traefik-proxy Netzwerk sein + external: true in networks:</div>
+      <table style="margin-top:8px;">
+        <tr><th>Label-Teil</th><th>Bedeutung</th></tr>
+        <tr><td><code>traefik.enable=true</code></td><td>Container aktivieren</td></tr>
+        <tr><td><code>routers.NAME.rule</code></td><td>Hostname-Regel</td></tr>
+        <tr><td><code>routers.NAME.entrypoints</code></td><td>web oder websecure</td></tr>
+        <tr><td><code>routers.NAME.tls=true</code></td><td>HTTPS aktivieren</td></tr>
+        <tr><td><code>services.NAME.loadbalancer.server.port</code></td><td>Container-Port intern</td></tr>
+      </table>
+    </div>
+
+    <!-- DEBUGGING -->
+    <div class="box">
+      <h2>Debugging – Alle Themen</h2>
+      <pre><span class="c">## SSH</span>
+ssh -v user@host           <span class="c"># verbose</span>
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+journalctl -u ssh -f
+
+<span class="c">## Disk</span>
+lsblk / blkid
+mount -a                   <span class="c"># fstab testen</span>
+dmesg | tail -20
+
+<span class="c">## Netzwerk</span>
+ip addr / ip route
+ss -tlpn                   <span class="c"># offene Ports</span>
+ping host
+resolvectl status
+
+<span class="c">## DNS</span>
+named-checkconf
+named-checkzone zone file
+journalctl -u named -f
+rndc querylog
+nslookup host dns-ip
+
+<span class="c">## Apache</span>
+apache2ctl configtest
+apache2ctl -S
+tail -f /var/log/apache2/error.log
+curl -H "Host: x.ch" http://127.0.0.1
+
+<span class="c">## Docker</span>
+docker logs -f name
+docker ps -a
+docker inspect name
+docker network inspect traefik-proxy
+docker exec -it name bash
+
+<span class="c">## Traefik</span>
+docker compose logs -f
+curl -v -H "Host: app.m300.ch" http://127.0.0.1
+ss -tlpn                   <span class="c"># Port 80/443 offen?</span>
+
+<span class="c">## Systemd allgemein</span>
+systemctl status name
+journalctl -u name -f
+journalctl -xe</pre>
+    </div>
+
+  </div><!-- end grid -->
+</div>
+</body>
+</html>

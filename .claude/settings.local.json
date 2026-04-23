@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/elias/Desktop/m300 && unzip -l vm300-306-2026fs-rainer-html-export.zip | head -100)"
+    ]
+  }
+}

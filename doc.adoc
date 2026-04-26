@@ -1,0 +1,468 @@
+= M300
+
+:imagesdir: src
+
+== Terminals und Tools
+
+=== SSH
+
+image::1keyscan.png[]
+
+image::2sshgen.png[]
+
+image::3authkeys.png[]
+
+image::4sshwithcmd.png[]
+
+=== SCP
+
+    ssh -R 2222:127.0.0.1:22 vmadmin@192.168.220.13
+
+    scp -P 2222 archiv.zip vmadmin@127.0.0.1:~/
+
+=== SFTP
+
+image::5sftp.png[]
+
+
+=== RSYNC
+
+=== SSH Config
+
+image::6configshortcut.png[]
+
+image::7remoteshortcut.png[]
+
+== SSH Tunneling
+
+=== MYSQL Container
+
+image::8mysqlcontainer.png[]
+
+sudo apt update && sudo apt install mysql-client-core-8.0
+
+image::9mysqlDB.png[]
+
+``ss -tlpn:
+``
+
+``LISTEN 0 4096 127.0.0.1:3306 0.0.0.0:*
+``
+
+
+=== Tunneling
+
+
+`ssh  -L 127.0.0.1:13306:127.0.0.1:3306  vmadmin@192.168.220.13`
+
+image::10mysqlonvmlp1.png[]
+
+
+image::11sshtunnelohneremotelogin.png[]
+
+`kill 6725`
+
+
+=== SSH durch FW
+
+image::12sshdurchfw.png[]
+
+image::13sshdurchfw2.png[]
+
+
+=== Webserver hinter NAT
+
+image::14WebserverhinterNAT.png[]
+
+
+==== Problem beim WGET auf VMLS3
+
+image::15GatewayportsYES.png[]
+
+
+Falls Prozess 8123 immer noch auf 127...zeigt das hier machen:
+
+image::16Debug.png[]
+
+Danach sollte es auf 0.0.0.0 zeigen.
+
+
+TUNNEL NEU AUFBAUEN!!
+
+image::17NewTunnel.png[]
+
+
+Erneut versuchen:
+
+image::18WgetfromVMLS3.png[]
+
+
+== Tools
+
+=== SSH
+
+*Wieder SSH einrichten*
+
+    ssh-keygen -t ecdsa
+
+    ssh-copy-id 192.168.220.13
+
+    ssh 192.168.220.13
+
+auf vmLS3 mit Root:
+
+image::19RootSSH.png[]
+
+
+=== Disk
+
+image::20Disk.png[]
+
+Kontroller mit: `lsblk`
+
+
+Nun formatieren wir die Partition /dev/sdd1
+mit dem Dateisystem ext4 und geben ihn das Label m300data.
+
+image::21FormatDisk.png[]
+
+
+*Automatisch mounten bei Reboot*
+
+sudo nano /etc/fstab
+
+image::22FSTAB.png[]
+
+nun mounten und prüfen
+
+image::23Mount.png[]
+
+
+=== Docker
+
+image::24InstallDocker.png[]
+
+vmadmin zu Docker Gruppe hinzufügen:
+
+`usermod -aG docker vmadmin`
+
+=== Portainer
+
+Volume erstellen
+
+image::25CreateVolume.png[]
+
+Portainer einrichten:
+
+    docker run -d -p 9000:9000 --name portainer --restart always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v portainer_data:/data \
+        portainer/portainer-ce:lts
+
+nun http://192.168.220.13:9000 im Browser
+
+
+==== Docker Compose
+
+image::26DockerStackPortainer.png[]
+
+Siehe docker-compose.yml;
+
+    version: "3.6"
+        services:
+            db:
+                image: mariadb:10.6.4-focal
+                command: '--default-authentication-plugin=mysql_native_password'
+                volumes:
+                    - db_data:/var/lib/mysql
+                restart: always
+                environment:
+                    - MYSQL_ROOT_PASSWORD=somewordpress
+                    - MYSQL_DATABASE=wordpress
+                    - MYSQL_USER=wordpress
+                    - MYSQL_PASSWORD=wordpress
+                expose:
+                    - 3306
+                    - 33060
+            wordpress:
+                image: wordpress:latest
+                volumes:
+                    - wp_data:/var/www/html
+                ports:
+                    - 80:80
+                restart: always
+                environment:
+                    - WORDPRESS_DB_HOST=db
+                    - WORDPRESS_DB_USER=wordpress
+                    - WORDPRESS_DB_PASSWORD=wordpress
+                    - WORDPRESS_DB_NAME=wordpress
+        volumes:
+            db_data:
+            wp_data:
+
+
+Danach: http://vmls3.m300.smartlearn.ch/wp-admin/install.php
+
+
+`python3 -m http.server 1234`
+
+`php -S localhost:8080`
+`php -S 0.0.0.0:8080`
+
+
+`while true; do cat index.http | nc -l 8000; done`
+
+Siehe index.http dafür
+
+
+
+
+docker run -d -p 1234:80 traefik/whoami
+wget -qO- http://192.168.220.13:1234
+
+
+telnet www.gibb.ch 80
+
+wget http://gibb.ch
+
+curl http://gibb.ch
+
+
+=== Apache2
+
+``sudo apt install apache2
+``
+
+**Apache aktivieren:
+**
+image::27EnableApache.png[]
+
+image::28ApacheResources.png[]
+
+**VirtualHost konfigurieren:
+**
+
+sudo nano /etc/apache2/sites-available/myweb.conf
+
+    <VirtualHost *:80>
+        ServerName myweb.local
+        DocumentRoot /var/www/html/myweb
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+    </VirtualHost>
+
+
+    sudo a2ensite myweb
+    sudo a2dissite 000-default    # Standard-Site deaktivieren
+    sudo systemctl reload apache2
+
+*Testen*
+
+    wget -qO- http://192.168.220.13
+
+*Debugging*
+
+    sudo systemctl status apache2      # Status prüfen
+    sudo apache2ctl -S                 # VirtualHost-Konfiguration anzeigen
+    sudo ss -tlpn | grep :80          # Port 80 prüfen
+    sudo journalctl -xeu apache2      # Logs bei Fehler
+
+
+== DNS
+
+ACHTUNG: Zuerst alle Images pullen:
+
+    docker pull eafxx/bind
+
+image::29DeleteServicesDNSpng[]
+
+Somit ist Port 53 freigegeben
+
+=== DNS als Container
+
+    version: '3.6'
+    services:
+        bind:
+            image: eafxx/bind
+            restart: unless-stopped
+            ports:
+                - 53:53/tcp
+                - 53:53/udp
+                - 10000:10000
+            expose:
+                - 10000
+            volumes:
+                - 'bind:/data'
+                - './named.conf.options:/etc/bind/named.conf.options'
+            environment:
+                - WEBMIN_ENABLED=true
+                - WEBMIN_INIT_SSL_ENABLED=false
+                - WEBMIN_INIT_REFERERS=vmls3.m300.smartlearn.ch
+                - WEBMIN_INIT_REDIRECT_PORT=10000
+                - ROOT_PASSWORD=sml12345
+                - TZ=Europe/Zurich
+    volumes:
+        bind:
+
+
+
+**Output:
+**
+
+image::30DNSContainerPort.png[]
+
+Dann: http://192.168.220.13:10000/
+
+
+==== Mit URL
+
+
+image::31WebMin.png[]
+
+
+image::32WebMinEditConfig.png[]
+
+Auf vmLP1:
+
+sudo cat /etc/resolv.conf
+
+*nameserver anpassen:*
+
+    nameserver 192.168.220.13
+    options edns0 trust-ad
+    search .
+
+*test:* nslookup webmin.vmls3.m300.smartlearn.ch
+
+
+== Webmin
+
+image::33BIND.png[]
+
+    sudo docker exec dns-webmin-bind-1 bash -c 'cat > /etc/bind/named.conf.local << EOF
+    // lokale zonen
+    //
+    zone "lan.m300.smartlearn.ch" {
+        type master;
+        file "/etc/bind/db.lan.m300.smartlearn.ch";
+    };
+    zone "220.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/db.192.168.220";
+    };
+    zone "210.168.192.in-addr.arpa" {
+        type master;
+        file "/etc/bind/db.192.168.210";
+    };
+    EOF'
+
+
+Zonen Records anpassen:
+
+    sudo docker exec dns-webmin-bind-1 bash -c 'cat > /etc/bind/db.192.168.220 << EOF
+    \$TTL 604800
+    @   IN  SOA vmls3.lan.m300.smartlearn.ch. admin.lan.m300.smartlearn.ch. (
+                2026042601 ; Serial
+                604800     ; Refresh
+                86400      ; Retry
+                2419200    ; Expire
+                604800 )   ; Negative Cache TTL
+    @   IN  NS  vmls3.lan.m300.smartlearn.ch.
+    13  IN  PTR vmls3.lan.m300.smartlearn.ch.
+    EOF'
+
+
+    sudo docker exec dns-webmin-bind-1 bash -c 'cat > /etc/bind/db.192.168.210 << EOF
+    \$TTL 86400
+    @   IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. (
+                            2026042601
+                            14400
+                            1800
+                            1209600
+                            3600 )
+    @   172800  IN NS ns.m300.smartlearn.ch.
+    1   IN PTR vmlf1.lan.m300.smartlearn.ch.
+    31  IN PTR vmlp1.lan.m300.smartlearn.ch.
+    EOF'
+
+
+    sudo docker exec dns-webmin-bind-1 bash -c 'cat > /etc/bind/db.lan.m300.smartlearn.ch << EOF
+    \$TTL 3600
+    lan.m300.smartlearn.ch. IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. (
+                            2026042601
+                            3600
+                            600
+                            1209600
+                            3600 )
+    lan.m300.smartlearn.ch. IN NS ns.m300.smartlearn.ch.
+    vmls3   IN A 192.168.220.13
+    vmlp1   IN A 192.168.210.31
+    test    IN A 3.4.5.6
+    EOF'
+
+*NEUSTARTEN:*
+
+    sudo docker exec dns-webmin-bind-1 rndc reload
+    systemctl restart named
+
+**Test:**
+
+image::image-2026-04-26-21-40-58-966.png[]
+
+    nslookup test.lan.m300.smartlearn.ch 192.168.220.13
+    Server:		192.168.220.13
+    Address:	192.168.220.13#53
+    Name:	test.lan.m300.smartlearn.ch
+    Address: 3.4.5.6
+
+*Neue Record hinzufügen:*
+
+    sudo docker exec dns-webmin-bind-1 bash -c 'echo "vmls5   IN A 192.168.220.15" >> /etc/bind/db.lan.m300.smartlearn.ch'
+    sudo docker exec dns-webmin-bind-1 rndc reload
+
+    nslookup test.lan.m300.smartlearn.ch 192.168.220.13
+    Server:		192.168.220.13
+    Address:	192.168.220.13#53
+    Name:	test.lan.m300.smartlearn.ch
+    Address: 3.4.5.6
+
+
+*Wichtige Befehle:*
+
+    sudo docker exec dns-webmin-bind-1 cat /etc/bind/db.192.168.220
+
+image::image-2026-04-26-22-03-23-059.png[]
+
+image::image-2026-04-26-22-02-55-081.png[]
+
+WICHTIG!
+
+    sudo cat /etc/systemd/resolved.conf | grep DNSSEC
+    DNSSEC=no
+
+`resolvectl status`
+
+    Global
+        Protocols: -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+        resolv.conf mode: stub
+    Link 2 (eth0)
+        Current Scopes: DNS
+        Protocols: +DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+        Current DNS Server: 192.168.220.13
+        DNS Servers: 192.168.220.13
+
+*Suchdomänen:*
+
+    sudo resolvectl domain eth0 lan.m300.smartlearn.ch m300.smartlearn.ch
+
+image::image-2026-04-26-22-20-36-215.png[]
+
+
+
+== Traefik
+
+
+
+
+image::image-2026-04-26-23-57-04-495.png[]
+

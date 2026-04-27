@@ -1,5 +1,24 @@
 = M300
 
+Install tools:
+
+    sudo apt update
+    sudo apt install docker-compose-v2
+    sudo apt install mysql-client-core-8.0
+    sudo apt install apache2
+    sudo apt install docker.io
+    sudo apt install openssh-client
+    sudo apt install rsync
+    sudo apt install python3
+    sudo apt install php
+    sudo apt install netcat-openbsd
+    sudo apt install telnet
+    sudo apt install wget
+    sudo apt install curl
+    sudo apt install dnsutils
+    sudo apt install apache2-utils
+
+
 :imagesdir: src
 
 == Terminals und Tools
@@ -8,24 +27,64 @@
 
 image::1keyscan.png[]
 
+    ssh-keyscan localhost | ssh-keygen -lf -    # Fingerprint des Host-Keys anzeigen
+
 image::2sshgen.png[]
+
+    ssh-keygen                                  # SSH-Schlüsselpaar erstellen (Standard)
+    ssh-keygen -t ecdsa                         # mit ECDSA-Algorithmus
 
 image::3authkeys.png[]
 
+    ssh-copy-id 192.168.220.13                  # Public Key auf Server kopieren
+
 image::4sshwithcmd.png[]
+
+    ssh root@192.168.1.1                        # Login als root
+    ssh -l root 192.168.1.1                     # gleich, andere Schreibweise
+    ssh 192.168.220.13 "ip addr show"           # Remote-Befehl ohne Login-Shell
+
+*SSH Parameter:*
+
+    -i    Identity-File definieren (privater Schlüssel)
+    -X    Graphische Oberfläche remote ansprechbar machen (X-Forwarding)
+    -F    Konfigurationsfile angeben
+    -o    einzelne Option anpassen
+    -N    kein Remote-Kommando ausführen
+    -T    kein Terminal verwenden
+    -p    Verbindung auf Portnummer aufbauen (statt Port 22)
+    -v    Debug-Ausgabe (auch mehrfach: -vvv)
+
+*IP-Adressen Referenz:*
+
+    0.0.0.0       alle Interfaces
+    127.0.0.1     Localhost (nur lokal erreichbar)
+    ::1           Localhost IPv6
+    192.168.1.1   statische Adresse eines Hosts
 
 === SCP
 
-    ssh -R 2222:127.0.0.1:22 vmadmin@192.168.220.13
+    scp huhu.txt vmadmin@192.168.220.13:hehe                             # lokal → remote
+    scp vmadmin@192.168.220.13:hehe/huhu.txt huhu                        # remote → lokal
+    scp vmadmin@192.168.220.14:hihi.txt vmadmin@192.168.220.13:hihi      # remote → remote
+    scp -P 2222 archiv.zip vmadmin@127.0.0.1:~/                          # anderer Port
 
-    scp -P 2222 archiv.zip vmadmin@127.0.0.1:~/
+    ssh -R 2222:127.0.0.1:22 vmadmin@192.168.220.13    # SCP über Reverse-Tunnel
 
 === SFTP
 
 image::5sftp.png[]
 
+    sftp vmadmin@192.168.220.13    # Interaktiver Dateitransfer
 
 === RSYNC
+
+    rsync -rav --progress --delete iMrlvn.github.io vmadmin@192.168.220.13:website
+    # -r rekursiv, -a Metadaten erhalten, -v verbose
+    # --progress Fortschritt, --delete auf Ziel löschen was lokal nicht mehr existiert
+
+    rsync -avz datei.txt vmadmin@192.168.220.13:~/          # einzelne Datei kopieren
+    rsync -avz vmadmin@192.168.220.13:~/datei.txt ./        # Datei von Remote holen
 
 === SSH Config
 
@@ -33,52 +92,97 @@ image::6configshortcut.png[]
 
 image::7remoteshortcut.png[]
 
+*Alias in ~/.ssh/config:*
+
+    Host meinserver
+      HostName 192.168.220.13
+      User vmadmin
+      IdentityFile ~/.ssh/key
+      IdentitiesOnly yes
+
 == SSH Tunneling
 
 === MYSQL Container
 
 image::8mysqlcontainer.png[]
 
+    docker run -d \
+      --name my-mysql \
+      -e MYSQL_ROOT_PASSWORD=my-secret-pw \
+      -p 127.0.0.1:3306:3306 \
+      mysql:latest
+
 sudo apt update && sudo apt install mysql-client-core-8.0
 
 image::9mysqlDB.png[]
 
-``ss -tlpn:
-``
+    ss -tlpn
 
-``LISTEN 0 4096 127.0.0.1:3306 0.0.0.0:*
-``
+Output:
+
+    LISTEN 0 4096 127.0.0.1:3306 0.0.0.0:*
+
+    mysql -h 127.0.0.1 -u root -p    # Verbinden
+    create database LS3LOKAL;         # DB erstellen
 
 
 === Tunneling
 
-
-`ssh  -L 127.0.0.1:13306:127.0.0.1:3306  vmadmin@192.168.220.13`
+    ssh -L 127.0.0.1:13306:127.0.0.1:3306 vmadmin@192.168.220.13        # mit Login-Shell
 
 image::10mysqlonvmlp1.png[]
 
-
 image::11sshtunnelohneremotelogin.png[]
 
-`kill 6725`
+    ssh -L 127.0.0.1:13306:127.0.0.1:3306 -N -f vmadmin@192.168.220.13  # ohne Shell, im Hintergrund
+
+    mysql -h 127.0.0.1 -P 13306 -u root -pmy-secret-pw    # von aussen verbinden
+
+    ps aux | grep ssh                # laufende SSH-Prozesse anzeigen
+    kill <PID>                       # Prozess beenden
+    pkill -f "ssh -L 127.0.0.1:13306"  # Tunnel gezielt beenden
 
 
-=== SSH durch FW
+=== SSH durch FW (Reverse Tunnel)
 
 image::12sshdurchfw.png[]
 
 image::13sshdurchfw2.png[]
+
+*Szenario: Server → Client gesperrt durch Firewall*
+
+    # Auf Client ausführen:
+    ssh -R 12222:127.0.0.1:22 vmadmin@192.168.220.13
+
+    # Danach vom Server auf Client verbinden:
+    ssh -p 12222 vmadmin@127.0.0.1
+
+    pkill -f "ssh -R 12222"    # Reverse-Tunnel beenden
 
 
 === Webserver hinter NAT
 
 image::14WebserverhinterNAT.png[]
 
+    # Auf Client (vmLP1):
+    echo 'Hier ist vmLP1' > index.html
+    sudo python3 -m http.server 80
+    ssh -R 0.0.0.0:8123:127.0.0.1:80 vmadmin@192.168.220.13
+
+    # Auf Server (vmLS3) testen:
+    wget 127.0.0.1:8123
+
 
 ==== Problem beim WGET auf VMLS3
 
 image::15GatewayportsYES.png[]
 
+*GatewayPorts aktivieren (damit Tunnel auf 0.0.0.0 lauscht):*
+
+    # In /etc/ssh/sshd_config auf dem Server:
+    GatewayPorts yes
+
+    sudo systemctl restart ssh
 
 Falls Prozess 8123 immer noch auf 127...zeigt das hier machen:
 
@@ -109,6 +213,11 @@ image::18WgetfromVMLS3.png[]
 
     ssh 192.168.220.13
 
+*Debugging SSH:*
+
+    ssh -v vmadmin@192.168.220.13      # verbose, zeigt wo es hängt
+    ssh -vvv vmadmin@192.168.220.13    # maximales Detail
+
 auf vmLS3 mit Root:
 
 image::19RootSSH.png[]
@@ -118,13 +227,20 @@ image::19RootSSH.png[]
 
 image::20Disk.png[]
 
-Kontroller mit: `lsblk`
+    lsblk                                           # Disks und Partitionen anzeigen
 
+    sudo fdisk /dev/sdd                             # Disk partitionieren
+    # → n  (neue Partition), Enter, Enter, Enter
+    # → w  (schreiben und beenden)
 
 Nun formatieren wir die Partition /dev/sdd1
 mit dem Dateisystem ext4 und geben ihn das Label m300data.
 
 image::21FormatDisk.png[]
+
+    sudo mkfs -t ext4 -L m300data /dev/sdd1        # Partition formatieren
+    blkid                                           # UUIDs und Dateisysteme anzeigen
+    sudo mkdir /m300data                            # Mountpoint erstellen
 
 
 *Automatisch mounten bei Reboot*
@@ -137,14 +253,47 @@ nun mounten und prüfen
 
 image::23Mount.png[]
 
+    mount -a                                        # Alle fstab-Einträge mounten
+    lsblk                                           # Mount prüfen
+
 
 === Docker
 
 image::24InstallDocker.png[]
 
+    mkdir /m300data/docker
+    ln -s /m300data/docker /var/lib/docker          # Docker-Daten auf separate Disk
+    sudo apt install -y docker.io docker-compose-v2
+    docker run hello-world                           # Installation testen
+
 vmadmin zu Docker Gruppe hinzufügen:
 
-`usermod -aG docker vmadmin`
+    sudo usermod -aG docker vmadmin
+
+*Docker Befehle:*
+
+    docker ps                        # laufende Container
+    docker ps -a                     # alle Container (auch gestoppte)
+    docker images                    # heruntergeladene Images
+    docker stop <name>               # Container stoppen
+    docker rm <name>                 # Container löschen
+    docker logs <containername>      # Logs anzeigen
+    docker inspect <containername>   # Details & Netzwerk-Config
+    docker exec -it <name> bash      # Shell in Container öffnen
+
+*Volumes:*
+
+    docker volume create portainer_data    # Volume erstellen
+    docker volume ls                       # Volumes anzeigen
+    docker volume rm <name>               # Volume löschen
+
+*Docker Compose:*
+
+    docker compose up              # starten (Vordergrund)
+    docker compose up -d           # starten (Hintergrund)
+    docker compose down            # stoppen und entfernen
+    docker compose ps              # Status anzeigen
+    docker compose logs            # Logs anzeigen
 
 === Portainer
 
@@ -270,6 +419,31 @@ sudo nano /etc/apache2/sites-available/myweb.conf
 
 == DNS
 
+*Wichtigste DNS Record-Typen:*
+
+[cols="1,3"]
+|===
+|Record |Bedeutung
+
+|A
+|Hostname → IPv4-Adresse
+
+|CNAME
+|Alias → anderer Hostname (z.B. www → vmls3.lan.m300.smartlearn.ch)
+
+|MX
+|Mail-Server für eine Domain
+
+|NS
+|Nameserver der Zone
+
+|SOA
+|Start of Authority – Zonen-Metadaten (Serial, TTL, etc.)
+
+|TXT
+|Freitext – oft für SPF, DKIM, Domain-Verifizierung
+|===
+
 ACHTUNG: Zuerst alle Images pullen:
 
     docker pull eafxx/bind
@@ -333,6 +507,12 @@ sudo cat /etc/resolv.conf
     search .
 
 *test:* nslookup webmin.vmls3.m300.smartlearn.ch
+
+*Debugging DNS:*
+
+    nslookup test.lan.m300.smartlearn.ch 192.168.220.13    # einfacher Test
+    dig test.lan.m300.smartlearn.ch @192.168.220.13        # detaillierter Test
+    dig -x 192.168.220.13 @192.168.220.13                  # Reverse-Lookup testen
 
 
 == Webmin
@@ -461,8 +641,117 @@ image::image-2026-04-26-22-20-36-215.png[]
 
 == Traefik
 
+*Zuerst:*
+
+    docker network create traefik-proxy
+    apt install apache2-utils
+    htpasswd -cB pfwile admin
+
+image::image-2026-04-27-22-34-57-602.png[]
 
 
+Dann diesen Struktur aufbauen.
+
+*Siehe traefik Ordner*
 
 image::image-2026-04-26-23-57-04-495.png[]
 
+anschliessend:
+
+    docker compose up -d
+    [+] Running 1/1
+    ✔ Container traefik  Started
+
+80 und 443 müssen freigegeben werden:
+    0.0.0.0:80->80/tcp
+    0.0.0.0:443->443/tcp
+
+**sonst freigeben mit:
+**
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp
+
+**alternative:
+**
+    sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+=== Beispiel Anwendung
+
+**simples nginx docker-compose:
+**
+    services:
+      nginx:
+        image: nginx:1.20
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.nginx.entrypoints=websecure"
+          - "traefik.http.routers.nginx.rule=Host(`nginx.m300.smartlearn.ch`)"
+          - "traefik.http.routers.nginx.tls=true"
+          - "traefik.http.services.nginx.loadbalancer.server.port=80"
+        networks:
+          - traefik-proxy
+    networks:
+      traefik-proxy:
+        external: true
+
+
+**Apache PHP Seite:
+**
+    services:
+      nginx:
+        image: php:8.1-apache
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.php.entrypoints=websecure"
+          - "traefik.http.routers.php.rule=Host(`php.m300.smartlearn.ch`)"
+          - "traefik.http.routers.php.tls=true"
+          - "traefik.http.services.php.loadbalancer.server.port=80"
+        networks:
+          - traefik-proxy
+        volumes:
+          - ./html:/var/www/html
+    networks:
+      traefik-proxy:
+        external: true
+
+**html seite noch erfassen:
+**
+    mkdir html
+    echo '<?php phpinfo();' | sudo tee html/index.php
+
+
+*Mit Middleware (PathPrefix /test mit Strip):*
+
+    services:
+      nginx:
+        image: php:8.1-apache
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.php.entrypoints=websecure"
+          - "traefik.http.routers.php.rule=Host(`php.m300.smartlearn.ch`) && PathPrefix(`/test`)"
+          - "traefik.http.routers.php.tls=true"
+          - "traefik.http.routers.php.middlewares=strip-testpath@docker" # aktiviert Middleware strip für diesen Container
+          - "traefik.http.services.php.loadbalancer.server.port=80"
+          - "traefik.http.middlewares.strip-testpath.stripprefix.prefixes=/test" # entfernt /test bei Aufruf
+        networks:
+          - traefik-proxy
+        volumes:
+          - ./html:/var/www/html
+    networks:
+      traefik-proxy:
+        external: true
+
+Unterseite noch erstellen:
+
+    mkdir -p html/test
+    echo '<?php echo "<h1>Das ist die Test-Seite</h1>";' | sudo tee html/test/index.php
+
+Erreichbar unter: https://php.m300.smartlearn.ch/test
+
+*Debugging Traefik:*
+
+    docker logs traefik                         # Traefik Logs prüfen
+    docker ps | grep traefik                    # läuft der Container?
+    curl -v https://php.m300.smartlearn.ch      # HTTP-Antwort detailliert
+    docker inspect <containername> | grep -i network  # Netzwerk prüfen

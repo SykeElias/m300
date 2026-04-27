@@ -551,6 +551,32 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>M300</h1>
 </div>
 <div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Install tools:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo apt update
+sudo apt install docker-compose-v2
+sudo apt install mysql-client-core-8.0
+sudo apt install apache2
+sudo apt install docker.io
+sudo apt install openssh-client
+sudo apt install rsync
+sudo apt install python3
+sudo apt install php
+sudo apt install netcat-openbsd
+sudo apt install telnet
+sudo apt install wget
+sudo apt install curl
+sudo apt install dnsutils
+sudo apt install apache2-utils</pre>
+</div>
+</div>
+</div>
+</div>
 <div class="sect1">
 <h2 id="_terminals_und_tools">Terminals und Tools</h2>
 <div class="sectionbody">
@@ -561,9 +587,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/1keyscan.png" alt="1keyscan">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh-keyscan localhost | ssh-keygen -lf -    # Fingerprint des Host-Keys anzeigen</pre>
+</div>
+</div>
 <div class="imageblock">
 <div class="content">
 <img src="src/2sshgen.png" alt="2sshgen">
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh-keygen                                  # SSH-Schlüsselpaar erstellen (Standard)
+ssh-keygen -t ecdsa                         # mit ECDSA-Algorithmus</pre>
 </div>
 </div>
 <div class="imageblock">
@@ -571,15 +608,65 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/3authkeys.png" alt="3authkeys">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh-copy-id 192.168.220.13                  # Public Key auf Server kopieren</pre>
+</div>
+</div>
 <div class="imageblock">
 <div class="content">
 <img src="src/4sshwithcmd.png" alt="4sshwithcmd">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh root@192.168.1.1                        # Login als root
+ssh -l root 192.168.1.1                     # gleich, andere Schreibweise
+ssh 192.168.220.13 "ip addr show"           # Remote-Befehl ohne Login-Shell</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>SSH Parameter:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>-i    Identity-File definieren (privater Schlüssel)
+-X    Graphische Oberfläche remote ansprechbar machen (X-Forwarding)
+-F    Konfigurationsfile angeben
+-o    einzelne Option anpassen
+-N    kein Remote-Kommando ausführen
+-T    kein Terminal verwenden
+-p    Verbindung auf Portnummer aufbauen (statt Port 22)
+-v    Debug-Ausgabe (auch mehrfach: -vvv)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>IP-Adressen Referenz:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>0.0.0.0       alle Interfaces
+127.0.0.1     Localhost (nur lokal erreichbar)
+::1           Localhost IPv6
+192.168.1.1   statische Adresse eines Hosts</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_scp">SCP</h3>
-
+<div class="literalblock">
+<div class="content">
+<pre>scp huhu.txt vmadmin@192.168.220.13:hehe                             # lokal → remote
+scp vmadmin@192.168.220.13:hehe/huhu.txt huhu                        # remote → lokal
+scp vmadmin@192.168.220.14:hihi.txt vmadmin@192.168.220.13:hihi      # remote → remote
+scp -P 2222 archiv.zip vmadmin@127.0.0.1:~/                          # anderer Port</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh -R 2222:127.0.0.1:22 vmadmin@192.168.220.13    # SCP über Reverse-Tunnel</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_sftp">SFTP</h3>
@@ -588,10 +675,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/5sftp.png" alt="5sftp">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>sftp vmadmin@192.168.220.13    # Interaktiver Dateitransfer</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_rsync">RSYNC</h3>
-
+<div class="literalblock">
+<div class="content">
+<pre>rsync -rav --progress --delete iMrlvn.github.io vmadmin@192.168.220.13:website
+# -r rekursiv, -a Metadaten erhalten, -v verbose
+# --progress Fortschritt, --delete auf Ziel löschen was lokal nicht mehr existiert</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>rsync -avz datei.txt vmadmin@192.168.220.13:~/          # einzelne Datei kopieren
+rsync -avz vmadmin@192.168.220.13:~/datei.txt ./        # Datei von Remote holen</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_ssh_config">SSH Config</h3>
@@ -603,6 +707,18 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="imageblock">
 <div class="content">
 <img src="src/7remoteshortcut.png" alt="7remoteshortcut">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Alias in ~/.ssh/config:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Host meinserver
+  HostName 192.168.220.13
+  User vmadmin
+  IdentityFile ~/.ssh/key
+  IdentitiesOnly yes</pre>
 </div>
 </div>
 </div>
@@ -618,6 +734,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/8mysqlcontainer.png" alt="8mysqlcontainer">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>docker run -d \
+  --name my-mysql \
+  -e MYSQL_ROOT_PASSWORD=my-secret-pw \
+  -p 127.0.0.1:3306:3306 \
+  mysql:latest</pre>
+</div>
+</div>
 <div class="paragraph">
 <p>sudo apt update &amp;&amp; sudo apt install mysql-client-core-8.0</p>
 </div>
@@ -626,19 +751,32 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/9mysqlDB.png" alt="9mysqlDB">
 </div>
 </div>
-<div class="paragraph">
-<p><code>ss -tlpn:
-</code></p>
+<div class="literalblock">
+<div class="content">
+<pre>ss -tlpn</pre>
+</div>
 </div>
 <div class="paragraph">
-<p><code>LISTEN 0 4096 127.0.0.1:3306 0.0.0.0:*
-</code></p>
+<p>Output:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>LISTEN 0 4096 127.0.0.1:3306 0.0.0.0:*</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>mysql -h 127.0.0.1 -u root -p    # Verbinden
+create database LS3LOKAL;         # DB erstellen</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_tunneling">Tunneling</h3>
-<div class="paragraph">
-<p><code>ssh  -L 127.0.0.1:13306:127.0.0.1:3306  vmadmin@192.168.220.13</code></p>
+<div class="literalblock">
+<div class="content">
+<pre>ssh -L 127.0.0.1:13306:127.0.0.1:3306 vmadmin@192.168.220.13        # mit Login-Shell</pre>
+</div>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -650,12 +788,26 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/11sshtunnelohneremotelogin.png" alt="11sshtunnelohneremotelogin">
 </div>
 </div>
-<div class="paragraph">
-<p><code>kill 6725</code></p>
+<div class="literalblock">
+<div class="content">
+<pre>ssh -L 127.0.0.1:13306:127.0.0.1:3306 -N -f vmadmin@192.168.220.13  # ohne Shell, im Hintergrund</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>mysql -h 127.0.0.1 -P 13306 -u root -pmy-secret-pw    # von aussen verbinden</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>ps aux | grep ssh                # laufende SSH-Prozesse anzeigen
+kill &lt;PID&gt;                       # Prozess beenden
+pkill -f "ssh -L 127.0.0.1:13306"  # Tunnel gezielt beenden</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_ssh_durch_fw">SSH durch FW</h3>
+<h3 id="_ssh_durch_fw_reverse_tunnel">SSH durch FW (Reverse Tunnel)</h3>
 <div class="imageblock">
 <div class="content">
 <img src="src/12sshdurchfw.png" alt="12sshdurchfw">
@@ -666,6 +818,26 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/13sshdurchfw2.png" alt="13sshdurchfw2">
 </div>
 </div>
+<div class="paragraph">
+<p><strong>Szenario: Server → Client gesperrt durch Firewall</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre># Auf Client ausführen:
+ssh -R 12222:127.0.0.1:22 vmadmin@192.168.220.13</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre># Danach vom Server auf Client verbinden:
+ssh -p 12222 vmadmin@127.0.0.1</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>pkill -f "ssh -R 12222"    # Reverse-Tunnel beenden</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_webserver_hinter_nat">Webserver hinter NAT</h3>
@@ -674,11 +846,39 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/14WebserverhinterNAT.png" alt="14WebserverhinterNAT">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre># Auf Client (vmLP1):
+echo 'Hier ist vmLP1' &gt; index.html
+sudo python3 -m http.server 80
+ssh -R 0.0.0.0:8123:127.0.0.1:80 vmadmin@192.168.220.13</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre># Auf Server (vmLS3) testen:
+wget 127.0.0.1:8123</pre>
+</div>
+</div>
 <div class="sect3">
 <h4 id="_problem_beim_wget_auf_vmls3">Problem beim WGET auf VMLS3</h4>
 <div class="imageblock">
 <div class="content">
 <img src="src/15GatewayportsYES.png" alt="15GatewayportsYES">
+</div>
+</div>
+<div class="paragraph">
+<p><strong>GatewayPorts aktivieren (damit Tunnel auf 0.0.0.0 lauscht):</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre># In /etc/ssh/sshd_config auf dem Server:
+GatewayPorts yes</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo systemctl restart ssh</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -736,6 +936,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="paragraph">
+<p><strong>Debugging SSH:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>ssh -v vmadmin@192.168.220.13      # verbose, zeigt wo es hängt
+ssh -vvv vmadmin@192.168.220.13    # maximales Detail</pre>
+</div>
+</div>
+<div class="paragraph">
 <p>auf vmLS3 mit Root:</p>
 </div>
 <div class="imageblock">
@@ -751,8 +960,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <img src="src/20Disk.png" alt="20Disk">
 </div>
 </div>
-<div class="paragraph">
-<p>Kontroller mit: <code>lsblk</code></p>
+<div class="literalblock">
+<div class="content">
+<pre>lsblk                                           # Disks und Partitionen anzeigen</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo fdisk /dev/sdd                             # Disk partitionieren
+# → n  (neue Partition), Enter, Enter, Enter
+# → w  (schreiben und beenden)</pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Nun formatieren wir die Partition /dev/sdd1
@@ -761,6 +979,13 @@ mit dem Dateisystem ext4 und geben ihn das Label m300data.</p>
 <div class="imageblock">
 <div class="content">
 <img src="src/21FormatDisk.png" alt="21FormatDisk">
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo mkfs -t ext4 -L m300data /dev/sdd1        # Partition formatieren
+blkid                                           # UUIDs und Dateisysteme anzeigen
+sudo mkdir /m300data                            # Mountpoint erstellen</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -782,6 +1007,12 @@ mit dem Dateisystem ext4 und geben ihn das Label m300data.</p>
 <img src="src/23Mount.png" alt="23Mount">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>mount -a                                        # Alle fstab-Einträge mounten
+lsblk                                           # Mount prüfen</pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_docker">Docker</h3>
@@ -790,11 +1021,58 @@ mit dem Dateisystem ext4 und geben ihn das Label m300data.</p>
 <img src="src/24InstallDocker.png" alt="24InstallDocker">
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>mkdir /m300data/docker
+ln -s /m300data/docker /var/lib/docker          # Docker-Daten auf separate Disk
+sudo apt install -y docker.io docker-compose-v2
+docker run hello-world                           # Installation testen</pre>
+</div>
+</div>
 <div class="paragraph">
 <p>vmadmin zu Docker Gruppe hinzufügen:</p>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo usermod -aG docker vmadmin</pre>
+</div>
+</div>
 <div class="paragraph">
-<p><code>usermod -aG docker vmadmin</code></p>
+<p><strong>Docker Befehle:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker ps                        # laufende Container
+docker ps -a                     # alle Container (auch gestoppte)
+docker images                    # heruntergeladene Images
+docker stop &lt;name&gt;               # Container stoppen
+docker rm &lt;name&gt;                 # Container löschen
+docker logs &lt;containername&gt;      # Logs anzeigen
+docker inspect &lt;containername&gt;   # Details &amp; Netzwerk-Config
+docker exec -it &lt;name&gt; bash      # Shell in Container öffnen</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Volumes:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker volume create portainer_data    # Volume erstellen
+docker volume ls                       # Volumes anzeigen
+docker volume rm &lt;name&gt;               # Volume löschen</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Docker Compose:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker compose up              # starten (Vordergrund)
+docker compose up -d           # starten (Hintergrund)
+docker compose down            # stoppen und entfernen
+docker compose ps              # Status anzeigen
+docker compose logs            # Logs anzeigen</pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -963,6 +1241,47 @@ sudo journalctl -xeu apache2      # Logs bei Fehler</pre>
 <h2 id="_dns">DNS</h2>
 <div class="sectionbody">
 <div class="paragraph">
+<p><strong>Wichtigste DNS Record-Typen:</strong></p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Record</th>
+<th class="tableblock halign-left valign-top">Bedeutung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hostname → IPv4-Adresse</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CNAME</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Alias → anderer Hostname (z.B. www → vmls3.lan.m300.smartlearn.ch)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">MX</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Mail-Server für eine Domain</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NS</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Nameserver der Zone</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SOA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Start of Authority – Zonen-Metadaten (Serial, TTL, etc.)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TXT</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Freitext – oft für SPF, DKIM, Domain-Verifizierung</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
 <p>ACHTUNG: Zuerst alle Images pullen:</p>
 </div>
 <div class="literalblock">
@@ -1050,6 +1369,16 @@ search .</pre>
 <div class="paragraph">
 <p><strong>test:</strong> nslookup webmin.vmls3.m300.smartlearn.ch</p>
 </div>
+<div class="paragraph">
+<p><strong>Debugging DNS:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>nslookup test.lan.m300.smartlearn.ch 192.168.220.13    # einfacher Test
+dig test.lan.m300.smartlearn.ch @192.168.220.13        # detaillierter Test
+dig -x 192.168.220.13 @192.168.220.13                  # Reverse-Lookup testen</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -1100,13 +1429,289 @@ EOF'</pre>
 EOF'</pre>
 </div>
 </div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo docker exec dns-webmin-bind-1 bash -c 'cat &gt; /etc/bind/db.192.168.210 &lt;&lt; EOF
+\$TTL 86400
+@   IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. (
+                        2026042601
+                        14400
+                        1800
+                        1209600
+                        3600 )
+@   172800  IN NS ns.m300.smartlearn.ch.
+1   IN PTR vmlf1.lan.m300.smartlearn.ch.
+31  IN PTR vmlp1.lan.m300.smartlearn.ch.
+EOF'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo docker exec dns-webmin-bind-1 bash -c 'cat &gt; /etc/bind/db.lan.m300.smartlearn.ch &lt;&lt; EOF
+\$TTL 3600
+lan.m300.smartlearn.ch. IN SOA ns.m300.smartlearn.ch. root.m300.smartlearn.ch. (
+                        2026042601
+                        3600
+                        600
+                        1209600
+                        3600 )
+lan.m300.smartlearn.ch. IN NS ns.m300.smartlearn.ch.
+vmls3   IN A 192.168.220.13
+vmlp1   IN A 192.168.210.31
+test    IN A 3.4.5.6
+EOF'</pre>
+</div>
+</div>
 <div class="paragraph">
-<p><code>sudo docker exec dns-webmin-bind-1 cat /etc/bind/db.192.168.220
-</code></p>
+<p><strong>NEUSTARTEN:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo docker exec dns-webmin-bind-1 rndc reload
+systemctl restart named</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Test:</strong></p>
 </div>
 <div class="imageblock">
 <div class="content">
 <img src="src/image-2026-04-26-21-40-58-966.png" alt="image 2026 04 26 21 40 58 966">
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>nslookup test.lan.m300.smartlearn.ch 192.168.220.13
+Server:		192.168.220.13
+Address:	192.168.220.13#53
+Name:	test.lan.m300.smartlearn.ch
+Address: 3.4.5.6</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Neue Record hinzufügen:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo docker exec dns-webmin-bind-1 bash -c 'echo "vmls5   IN A 192.168.220.15" &gt;&gt; /etc/bind/db.lan.m300.smartlearn.ch'
+sudo docker exec dns-webmin-bind-1 rndc reload</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>nslookup test.lan.m300.smartlearn.ch 192.168.220.13
+Server:		192.168.220.13
+Address:	192.168.220.13#53
+Name:	test.lan.m300.smartlearn.ch
+Address: 3.4.5.6</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Wichtige Befehle:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo docker exec dns-webmin-bind-1 cat /etc/bind/db.192.168.220</pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="src/image-2026-04-26-22-03-23-059.png" alt="image 2026 04 26 22 03 23 059">
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="src/image-2026-04-26-22-02-55-081.png" alt="image 2026 04 26 22 02 55 081">
+</div>
+</div>
+<div class="paragraph">
+<p>WICHTIG!</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo cat /etc/systemd/resolved.conf | grep DNSSEC
+DNSSEC=no</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>resolvectl status</code></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Global
+    Protocols: -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+    resolv.conf mode: stub
+Link 2 (eth0)
+    Current Scopes: DNS
+    Protocols: +DefaultRoute -LLMNR -mDNS -DNSOverTLS DNSSEC=no/unsupported
+    Current DNS Server: 192.168.220.13
+    DNS Servers: 192.168.220.13</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Suchdomänen:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>sudo resolvectl domain eth0 lan.m300.smartlearn.ch m300.smartlearn.ch</pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="src/image-2026-04-26-22-20-36-215.png" alt="image 2026 04 26 22 20 36 215">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_traefik">Traefik</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>Zuerst:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker network create traefik-proxy
+apt install apache2-utils
+htpasswd -cB pfwile admin</pre>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="src/image-2026-04-27-22-34-57-602.png" alt="image 2026 04 27 22 34 57 602">
+</div>
+</div>
+<div class="paragraph">
+<p>Dann diesen Struktur aufbauen.</p>
+</div>
+<div class="paragraph">
+<p><strong>Siehe traefik Ordner</strong></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="src/image-2026-04-26-23-57-04-495.png" alt="image 2026 04 26 23 57 04 495">
+</div>
+</div>
+<div class="paragraph">
+<p>anschliessend:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker compose up -d
+[+] Running 1/1
+✔ Container traefik  Started</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>80 und 443 müssen freigegeben werden:
+    0.0.0.0:80&#8594;80/tcp
+    0.0.0.0:443&#8594;443/tcp</p>
+</div>
+<div class="paragraph">
+<p><strong>sonst freigeben mit:
+</strong>
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp</p>
+</div>
+<div class="paragraph">
+<p><strong>alternative:
+</strong>
+    sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT</p>
+</div>
+<div class="sect2">
+<h3 id="_beispiel_anwendung">Beispiel Anwendung</h3>
+<div class="paragraph">
+<p><strong>simples nginx docker-compose:
+</strong>
+    services:
+      nginx:
+        image: nginx:1.20
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.nginx.entrypoints=websecure"
+          - "traefik.http.routers.nginx.rule=Host(<code>nginx.m300.smartlearn.ch</code>)"
+          - "traefik.http.routers.nginx.tls=true"
+          - "traefik.http.services.nginx.loadbalancer.server.port=80"
+        networks:
+          - traefik-proxy
+    networks:
+      traefik-proxy:
+        external: true</p>
+</div>
+<div class="paragraph">
+<p><strong>Apache PHP Seite:
+</strong>
+    services:
+      nginx:
+        image: php:8.1-apache
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.php.entrypoints=websecure"
+          - "traefik.http.routers.php.rule=Host(<code>php.m300.smartlearn.ch</code>)"
+          - "traefik.http.routers.php.tls=true"
+          - "traefik.http.services.php.loadbalancer.server.port=80"
+        networks:
+          - traefik-proxy
+        volumes:
+          - ./html:/var/www/html
+    networks:
+      traefik-proxy:
+        external: true</p>
+</div>
+<div class="paragraph">
+<p><strong>html seite noch erfassen:
+</strong>
+    mkdir html
+    echo '&lt;?php phpinfo();' | sudo tee html/index.php</p>
+</div>
+<div class="paragraph">
+<p><strong>Mit Middleware (PathPrefix /test mit Strip):</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>services:
+  nginx:
+    image: php:8.1-apache
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.php.entrypoints=websecure"
+      - "traefik.http.routers.php.rule=Host(`php.m300.smartlearn.ch`) &amp;&amp; PathPrefix(`/test`)"
+      - "traefik.http.routers.php.tls=true"
+      - "traefik.http.routers.php.middlewares=strip-testpath@docker" # aktiviert Middleware strip für diesen Container
+      - "traefik.http.services.php.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.strip-testpath.stripprefix.prefixes=/test" # entfernt /test bei Aufruf
+    networks:
+      - traefik-proxy
+    volumes:
+      - ./html:/var/www/html
+networks:
+  traefik-proxy:
+    external: true</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Unterseite noch erstellen:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>mkdir -p html/test
+echo '&lt;?php echo "&lt;h1&gt;Das ist die Test-Seite&lt;/h1&gt;";' | sudo tee html/test/index.php</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Erreichbar unter: <a href="https://php.m300.smartlearn.ch/test" class="bare">https://php.m300.smartlearn.ch/test</a></p>
+</div>
+<div class="paragraph">
+<p><strong>Debugging Traefik:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>docker logs traefik                         # Traefik Logs prüfen
+docker ps | grep traefik                    # läuft der Container?
+curl -v https://php.m300.smartlearn.ch      # HTTP-Antwort detailliert
+docker inspect &lt;containername&gt; | grep -i network  # Netzwerk prüfen</pre>
+</div>
 </div>
 </div>
 </div>
@@ -1114,7 +1719,7 @@ EOF'</pre>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2026-04-26 21:44:46 +0200
+Last updated 2026-04-27 23:00:49 +0200
 </div>
 </div>
 <script>

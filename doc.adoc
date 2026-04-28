@@ -366,24 +366,25 @@ Siehe index.http dafür
 
 
 
-docker run -d -p 1234:80 traefik/whoami
-wget -qO- http://192.168.220.13:1234
+    docker run -d -p 1234:80 traefik/whoami
+    wget -qO- http://192.168.220.13:1234
 
 
-telnet www.gibb.ch 80
+    telnet www.gibb.ch 80
 
-wget http://gibb.ch
+    wget http://gibb.ch
 
-curl http://gibb.ch
+    curl http://gibb.ch
 
 
 === Apache2
 
-``sudo apt install apache2
-``
+    sudo apt install apache2
+
 
 **Apache aktivieren:
 **
+
 image::27EnableApache.png[]
 
 image::28ApacheResources.png[]
@@ -391,7 +392,7 @@ image::28ApacheResources.png[]
 **VirtualHost konfigurieren:
 **
 
-sudo nano /etc/apache2/sites-available/myweb.conf
+    sudo nano /etc/apache2/sites-available/myweb.conf
 
     <VirtualHost *:80>
         ServerName myweb.local
@@ -668,11 +669,13 @@ anschliessend:
 
 **sonst freigeben mit:
 **
+
     sudo ufw allow 80/tcp
     sudo ufw allow 443/tcp
 
 **alternative:
 **
+
     sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
     sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
@@ -680,6 +683,7 @@ anschliessend:
 
 **simples nginx docker-compose:
 **
+
     services:
       nginx:
         image: nginx:1.20
@@ -698,6 +702,7 @@ anschliessend:
 
 **Apache PHP Seite:
 **
+
     services:
       nginx:
         image: php:8.1-apache
@@ -717,6 +722,7 @@ anschliessend:
 
 **html seite noch erfassen:
 **
+
     mkdir html
     echo '<?php phpinfo();' | sudo tee html/index.php
 
